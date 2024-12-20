@@ -9,3 +9,4 @@ export default async function Room({ params }: { params: Promise<{ roomId: strin
         </main>
     )
 }
+

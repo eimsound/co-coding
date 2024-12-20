@@ -5,6 +5,7 @@ import { io, Socket } from 'socket.io-client'
 import MonacoEditor from '@monaco-editor/react'
 import * as monaco from 'monaco-editor';
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
 
 interface CollaborativeEditorProps {
     roomId: string | undefined
@@ -26,7 +27,7 @@ export default function CollaborativeEditor({ roomId }: CollaborativeEditorProps
             return
         }
 
-        socketRef.current = io()
+        socketRef.current = io(BACKEND_URL)
 
         socketRef.current.on('connect', () => {
             console.log('Connected to server')

@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - FRONTEND_URL=http://localhost:3000  # Update this for production
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm start
+
