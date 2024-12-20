@@ -3,21 +3,29 @@ import express from 'express'
 import { Server } from 'socket.io'
 import cors from 'cors'
 
+const allowedOrigins = [process.env.FRONTEND_URL || "http://localhost:3000", "https://co-coding-c6wn.vercel.app"];
+
 const port = process.env.PORT || 3001
 const app = express()
 const server = createServer(app)
 
 app.use(cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ["GET", "POST"]
-}))
+}));
 
 const io = new Server(server, {
     cors: {
-        origin: process.env.FRONTEND_URL || "http://localhost:3000",
+        origin: allowedOrigins,
         methods: ["GET", "POST"]
     }
-})
+});
 
 const rooms = new Map<string, {
     users: Set<string>,
