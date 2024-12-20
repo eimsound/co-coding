@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import MonacoEditor from '@monaco-editor/react'
+import * as monaco from 'monaco-editor';
+
 
 interface CollaborativeEditorProps {
     roomId: string | undefined
@@ -16,7 +18,7 @@ export default function CollaborativeEditor({ roomId }: CollaborativeEditorProps
     const [isJoined, setIsJoined] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const socketRef = useRef<Socket | null>(null)
-    const editorRef = useRef<any>(null)
+    const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
     useEffect(() => {
         if (!roomId) {
@@ -66,9 +68,9 @@ export default function CollaborativeEditor({ roomId }: CollaborativeEditorProps
         }
     }
 
-    const handleEditorDidMount = (editor: any) => {
-        editorRef.current = editor
-    }
+    const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
+        editorRef.current = editor;
+    };
 
     const requestEditPermission = () => {
         if (roomId) {
