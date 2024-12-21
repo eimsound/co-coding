@@ -64,8 +64,12 @@ export default function CollaborativeEditor({ roomId }: CollaborativeEditorProps
     const handleEditorChange = (value: string | undefined) => {
         if (value !== undefined && roomId && !isReadOnly) {
             setEditorContent(value)
-            const lastChar = value.slice(-1)
-            socketRef.current?.emit('contentChange', { roomId, content: value, lastChar })
+            const cursorPosition = editorRef.current?.getPosition();
+            socketRef.current?.emit('contentChange', {
+                roomId,
+                content: value,
+                cursorPosition: cursorPosition ? cursorPosition.column + (cursorPosition.lineNumber - 1) * 1000 : 0
+            })
         }
     }
 
@@ -111,7 +115,11 @@ export default function CollaborativeEditor({ roomId }: CollaborativeEditorProps
                 theme="vs-dark"
                 value={editorContent}
                 onChange={handleEditorChange}
-                options={{ readOnly: isReadOnly }}
+                options={{
+                    readOnly: isReadOnly,
+                    wordWrap: 'on',
+                    minimap: { enabled: false }
+                }}
                 onMount={handleEditorDidMount}
             />
             <div className="mt-4 flex justify-between items-center">
