@@ -111,14 +111,14 @@ export default function CollaborativeEditor({ roomId }: CollaborativeEditorProps
         <div className="w-full h-[600px]">
             <MonacoEditor
                 height="100%"
-                language="javascript"
+                language="python"
                 theme="vs-dark"
                 value={editorContent}
                 onChange={handleEditorChange}
                 options={{
                     readOnly: isReadOnly,
                     wordWrap: 'on',
-                    minimap: { enabled: false }
+                    minimap: { enabled: false },
                 }}
                 onMount={handleEditorDidMount}
             />
