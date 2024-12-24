@@ -3,12 +3,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import MonacoEditor from '@monaco-editor/react'
-import * as monaco from 'monaco-editor';
+import * as monaco from 'monaco-editor'
+import SettingsModal from './SettingsModal'
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
 
 interface CollaborativeEditorProps {
     roomId: string | undefined
+}
+
+interface Settings {
+    switchTrigger: string;
+    cursorAtEnd: boolean;
 }
 
 export default function CollaborativeEditor({ roomId }: CollaborativeEditorProps) {
@@ -18,8 +24,20 @@ export default function CollaborativeEditor({ roomId }: CollaborativeEditorProps
     const [editingUser, setEditingUser] = useState<number | null>(null)
     const [isJoined, setIsJoined] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [settings, setSettings] = useState<Settings>({
+        switchTrigger: '\n',
+        cursorAtEnd: false
+    })
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false)
     const socketRef = useRef<Socket | null>(null)
-    const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+    const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+
+    useEffect(() => {
+        const savedSettings = localStorage.getItem('editorSettings')
+        if (savedSettings) {
+            setSettings(JSON.parse(savedSettings))
+        }
+    }, [])
 
     useEffect(() => {
         if (!roomId) {
@@ -61,26 +79,59 @@ export default function CollaborativeEditor({ roomId }: CollaborativeEditorProps
         }
     }, [roomId, userId])
 
+    useEffect(() => {
+        if (editorRef.current) {
+            const editor = editorRef.current;
+            if (settings.cursorAtEnd) {
+                editor.onDidChangeCursorPosition((e) => {
+                    const lastLine = editor.getModel()?.getLineCount() || 1;
+                    const lastColumn = editor.getModel()?.getLineMaxColumn(lastLine) || 1;
+                    if (e.position.lineNumber !== lastLine || e.position.column !== lastColumn) {
+                        editor.setPosition({ lineNumber: lastLine, column: lastColumn });
+                    }
+                });
+            } else {
+                // Remove the cursor position listener if cursorAtEnd is false
+                //editor.dispose(); //This line causes an error.  The editor is already disposed of by react.
+            }
+        }
+    }, [settings.cursorAtEnd]);
+
+
     const handleEditorChange = (value: string | undefined) => {
         if (value !== undefined && roomId && !isReadOnly) {
             setEditorContent(value)
-            const cursorPosition = editorRef.current?.getPosition();
+            const cursorPosition = editorRef.current?.getPosition()
             socketRef.current?.emit('contentChange', {
                 roomId,
                 content: value,
-                cursorPosition: cursorPosition ? cursorPosition.column + (cursorPosition.lineNumber - 1) * 1000 : 0
+                cursorPosition: cursorPosition ? cursorPosition.column + (cursorPosition.lineNumber - 1) * 1000 : 0,
+                settings
             })
         }
     }
 
     const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
-        editorRef.current = editor;
-    };
+        editorRef.current = editor
+        if (settings.cursorAtEnd) {
+            editor.onDidChangeCursorPosition((e) => {
+                const lastLine = editor.getModel()?.getLineCount() || 1
+                const lastColumn = editor.getModel()?.getLineMaxColumn(lastLine) || 1
+                if (e.position.lineNumber !== lastLine || e.position.column !== lastColumn) {
+                    editor.setPosition({ lineNumber: lastLine, column: lastColumn })
+                }
+            })
+        }
+    }
 
     const requestEditPermission = () => {
         if (roomId) {
             socketRef.current?.emit('requestEditPermission', roomId)
         }
+    }
+
+    const handleSettingsSave = (newSettings: Settings) => {
+        setSettings(newSettings)
     }
 
     if (!roomId) {
@@ -118,7 +169,7 @@ export default function CollaborativeEditor({ roomId }: CollaborativeEditorProps
                 options={{
                     readOnly: isReadOnly,
                     wordWrap: 'on',
-                    minimap: { enabled: false },
+                    minimap: { enabled: false }
                 }}
                 onMount={handleEditorDidMount}
             />
@@ -127,7 +178,7 @@ export default function CollaborativeEditor({ roomId }: CollaborativeEditorProps
                     You are User {userId} in Room {roomId}.
                     {isReadOnly
                         ? `User ${editingUser} is currently editing.`
-                        : 'You can edit now. Press Enter to switch control.'}
+                        : 'You can edit now.'}
                 </p>
                 {isReadOnly && (
                     <button
@@ -137,7 +188,18 @@ export default function CollaborativeEditor({ roomId }: CollaborativeEditorProps
                         Request Edit Permission
                     </button>
                 )}
+                <button
+                    onClick={() => setIsSettingsOpen(true)}
+                    className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                >
+                    Settings
+                </button>
             </div>
+            <SettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                onSave={handleSettingsSave}
+            />
         </div>
     )
 }

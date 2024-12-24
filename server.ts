@@ -34,6 +34,11 @@ interface Room {
     lastEditPosition: number;
 }
 
+interface Settings {
+    switchTrigger: string;
+    cursorAtEnd: boolean;
+}
+
 const rooms = new Map<string, Room>();
 
 io.on('connection', (socket) => {
@@ -66,23 +71,20 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('contentChange', ({ roomId, content, cursorPosition }) => {
+    socket.on('contentChange', ({ roomId, content, cursorPosition, settings }: { roomId: string, content: string, cursorPosition: number, settings: Settings }) => {
         const room = rooms.get(roomId);
         if (room && room.editingUser === userId) {
             const oldContent = room.content;
             room.content = content;
 
-            // 检查是否添加了新的换行符
-            const oldLines = oldContent.split('\n');
-            const newLines = content.split('\n');
+            const switchTrigger = settings.switchTrigger || '\n';
+            const newContentAfterLastEdit = content.slice(room.lastEditPosition);
 
-            if (newLines.length > oldLines.length) {
-                // 新的换行符被添加，切换编辑用户
+            if (newContentAfterLastEdit.includes(switchTrigger)) {
                 room.editingUser = userId === 1 ? 2 : 1;
-                room.lastEditPosition = cursorPosition;
+                room.lastEditPosition = content.length;
                 io.to(roomId).emit('setEditingUser', room.editingUser);
             } else if (cursorPosition < room.lastEditPosition) {
-                // 光标位置在上一次编辑位置之前，不切换用户
                 room.lastEditPosition = cursorPosition;
             }
 
@@ -94,7 +96,7 @@ io.on('connection', (socket) => {
         const room = rooms.get(roomId);
         if (room && room.editingUser !== userId) {
             room.editingUser = userId;
-            room.lastEditPosition = room.content.length; // 重置最后编辑位置
+            room.lastEditPosition = room.content.length;
             io.to(roomId).emit('setEditingUser', userId);
         }
     });
@@ -116,7 +118,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// 添加一个简单的健康检查路由
 app.get('/health', (req, res) => {
     res.status(200).send('OK');
 });
