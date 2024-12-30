@@ -6,6 +6,7 @@ import CodeMirror, {
     EditorView,
     keymap,
     ReactCodeMirrorRef,
+    ViewUpdate,
 } from '@uiw/react-codemirror'
 import { StreamLanguage } from '@codemirror/language'
 // import { vscodeDark } from '@uiw/codemirror-theme-vscode'
@@ -32,6 +33,7 @@ import { swift } from '@codemirror/legacy-modes/mode/swift'
 import { scheme } from '@codemirror/legacy-modes/mode/scheme'
 import { elixir } from 'codemirror-lang-elixir'
 import { insertNewlineAndIndent } from '@codemirror/commands'
+import './CollaborativeEditor.css'
 
 interface CollaborativeEditorProps {
     roomId: string | undefined
@@ -111,18 +113,6 @@ export default function CollaborativeEditor({
         }
     }, [roomId, userId])
 
-    // 强制光标在末尾
-    useEffect(() => {
-        if (!editorRef.current) return
-        const editor = editorRef.current?.view
-        editor?.dispatch({
-            selection: {
-                anchor: editor.state.doc.length,
-                head: editor.state.doc.length,
-            },
-        })
-    }, [editorContent])
-
     const handleEditorChange = (value: string) => {
         if (roomId && !isReadOnly) {
             setEditorContent(value)
@@ -165,34 +155,29 @@ export default function CollaborativeEditor({
         )
     }
 
+    // 移动光标到末尾
+    const setCursorEnd = (viewUpdate: ViewUpdate) => {
+        const { state, view } = viewUpdate
+        const { head, anchor } = state.selection.main
+        const docLength = state.doc.length
+
+        if (head !== docLength || anchor !== docLength) {
+            view.dispatch({
+                selection: { anchor: docLength, head: docLength },
+            })
+        }
+    }
+
+    const handleUpdate = (viewUpdate: ViewUpdate) => {
+        // 强制光标在末尾
+        setCursorEnd(viewUpdate)
+    }
+
     const extensions = [
         selectedLanguage.extension(),
-        EditorView.domEventHandlers({
-            // 禁止粘贴
-            paste: (e) => {
-                e.preventDefault()
-                return true
-            },
-            // 拦截方向键、Home、End等光标移动按键
-            keydown: (e) => {
-                if (
-                    e.key.includes('Arrow') ||
-                    e.key === 'Home' ||
-                    e.key === 'End' ||
-                    e.key === 'PageUp' ||
-                    e.key === 'PageDown'
-                ) {
-                    e.preventDefault()
-                    return true
-                }
-                return false
-            },
-            // 禁用鼠标点击移动光标
-            mousedown: (e) => {
-                e.preventDefault()
-                return true
-            },
-        }),
+        // 禁止粘贴
+        EditorView.domEventHandlers({ paste: () => true }),
+        // 快捷键仅保留换行
         keymap.of([{ key: 'Enter', run: insertNewlineAndIndent }]),
     ]
 
@@ -220,7 +205,7 @@ export default function CollaborativeEditor({
             <CodeMirror
                 ref={editorRef}
                 value={editorContent}
-                height="100%"
+                height="50vh"
                 // theme={vscodeDark}
                 extensions={extensions}
                 onChange={handleEditorChange}
@@ -243,6 +228,7 @@ export default function CollaborativeEditor({
                     lintKeymap: false,
                     tabSize: 4,
                 }}
+                onUpdate={handleUpdate}
             />
             <div className="mt-4 flex justify-between items-center">
                 <p>

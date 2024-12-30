@@ -1,6 +1,10 @@
-import CollaborativeEditor from '@/components/CollaborativeEditor'
+import CollaborativeEditor from '@/components/CollaborativeEditor/CollaborativeEditor'
 
-export default async function Room({ params }: { params: Promise<{ roomId: string }> }) {
+export default async function Room({
+    params,
+}: {
+    params: Promise<{ roomId: string }>
+}) {
     const { roomId } = await params
 
     return (
