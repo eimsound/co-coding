@@ -1,4 +1,4 @@
-import CollaborativeEditor from '@/components/CollaborativeEditor/CollaborativeEditor'
+import CollaborativeEditor from '@/components/CollaborativeEditor'
 
 export default async function Room({
     params,
@@ -13,4 +13,3 @@ export default async function Room({
         </main>
     )
 }
-

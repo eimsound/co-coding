@@ -2,11 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
-import CodeMirror, { EditorView, Extension, keymap, ReactCodeMirrorRef, ViewUpdate, } from '@uiw/react-codemirror'
+import CodeMirror, {
+    EditorView,
+    Extension,
+    keymap,
+    ReactCodeMirrorRef,
+    ViewUpdate,
+} from '@uiw/react-codemirror'
 import { StreamLanguage } from '@codemirror/language'
 // import { vscodeDark } from '@uiw/codemirror-theme-vscode'
 import { insertNewlineAndIndent } from '@codemirror/commands'
-import './CollaborativeEditor.css'
 
 const BACKEND_URL =
     process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'

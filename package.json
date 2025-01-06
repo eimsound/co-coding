@@ -17,16 +17,19 @@
         "codemirror-lang-elixir": "^4.0.0",
         "next": "15.1.2",
         "react": "^19.0.0",
+        "react-daisyui": "^5.0.5",
         "react-dom": "^19.0.0",
         "socket.io": "^4.8.1",
         "socket.io-client": "^4.8.1",
-        "ts-node": "^10.9.2"
+        "ts-node": "^10.9.2",
+        "zustand": "^5.0.2"
     },
     "devDependencies": {
         "@eslint/eslintrc": "^3",
         "@types/node": "^20",
         "@types/react": "^19",
         "@types/react-dom": "^19",
+        "daisyui": "^4.12.23",
         "eslint": "^9",
         "eslint-config-next": "15.1.2",
         "postcss": "^8",
