@@ -26,6 +26,9 @@ importers:
       '@uiw/react-codemirror':
         specifier: ^4.23.7
         version: 4.23.7(@babel/runtime@7.26.0)(@codemirror/autocomplete@6.18.4)(@codemirror/language@6.10.8)(@codemirror/lint@6.8.4)(@codemirror/search@6.5.8)(@codemirror/state@6.5.0)(@codemirror/theme-one-dark@6.1.2)(@codemirror/view@6.36.1)(codemirror@6.0.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       codemirror-lang-elixir:
         specifier: ^4.0.0
         version: 4.0.0
@@ -47,6 +50,9 @@ importers:
       socket.io-client:
         specifier: ^4.8.1
         version: 4.8.1
+      tailwind-merge:
+        specifier: ^2.6.0
+        version: 2.6.0
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.17.10)(typescript@5.7.2)
@@ -717,6 +723,10 @@ packages:
 
   client-only@0.0.1:
     resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
+
+  clsx@2.1.1:
+    resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
+    engines: {node: '>=6'}
 
   codemirror-lang-elixir@4.0.0:
     resolution: {integrity: sha512-mzFesxo/t6KOxwnkqVd34R/q7yk+sMtHh6vUKGAvjwHmpL7bERHB+vQAsmU/nqrndkwVeJEHWGw/z/ybfdiudA==}
@@ -1826,6 +1836,9 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
+  tailwind-merge@2.6.0:
+    resolution: {integrity: sha512-P+Vu1qXfzediirmHOC3xKGAYeZtPcV9g76X+xg2FD4tYgR71ewMA35Y3sCz3zhiN/dwefRpJX0yBcgwi1fXNQA==}
+
   tailwindcss@3.4.17:
     resolution: {integrity: sha512-w33E2aCvSDP0tW9RZuNXadXlkHXqFzSkQew/aIa2i/Sj8fThxwovwlXHSPXTbAHwEIhBFXAedUhP2tueAKP8Og==}
     engines: {node: '>=14.0.0'}
@@ -2704,6 +2717,8 @@ snapshots:
       fsevents: 2.3.3
 
   client-only@0.0.1: {}
+
+  clsx@2.1.1: {}
 
   codemirror-lang-elixir@4.0.0:
     dependencies:
@@ -4060,6 +4075,8 @@ snapshots:
       has-flag: 4.0.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
+
+  tailwind-merge@2.6.0: {}
 
   tailwindcss@3.4.17(ts-node@10.9.2(@types/node@20.17.10)(typescript@5.7.2)):
     dependencies:
