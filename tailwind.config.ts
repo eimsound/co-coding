@@ -20,9 +20,9 @@ export default {
     plugins: [daisyui],
     daisyui: {
         themes: [
-            'cupcake',
-            'dark',
             'light',
+            'dark',
+            'cupcake',
             'bumblebee',
             'emerald',
             'corporate',

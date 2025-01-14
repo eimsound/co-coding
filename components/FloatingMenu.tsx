@@ -1,55 +1,68 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Button, Modal } from 'react-daisyui'
-import SettingPanel from './SettingPanel'
-// import ChangeThemePanel from './ChangeThemePanel';
+import { Button, Modal, Menu, Tooltip } from 'react-daisyui'
 import { Icons } from '@/common/icons'
 import { ThemePanel } from './ThemePanel'
+import { SettingDialog } from './SettingDialog'
 
 export const FloatingMenu: React.FC = (
     props: React.ComponentProps<'div'> | { className: string },
 ) => {
-    // const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-    // const [isThemeOpen, setIsThemeOpen] = useState(false)
-    const { Dialog: SettingDialog, handleShow: settingHandleShow } =
-        Modal.useDialog()
+    const [isSettingDialogOpen, setIsSettingDialogOpen] = useState(false)
     const { Dialog: ThemeDialog, handleShow: themeHandleShow } =
         Modal.useDialog()
-    // const { ,  } = Modal.useDialog()
 
     return (
         <div
-            className="fixed bottom-4 right-4 flex flex-col space-y-2"
+            className='fixed bottom-4 right-4 flex flex-col space-y-2'
             {...props}
         >
-            <Button onClick={settingHandleShow} className="btn btn-primary">
-                <Icons.Settings className="h-5 w-5" />
-            </Button>
+            <Menu horizontal className='rounded-box bg-base-200 p-2'>
+                <Menu.Item>
+                    <Tooltip
+                        message='Settings'
+                        position='top'
+                        onClick={() => setIsSettingDialogOpen(true)}
+                    >
+                        <Icons.Settings className='h-5 w-5' />
+                    </Tooltip>
+                </Menu.Item>
+                <Menu.Item>
+                    <Tooltip
+                        message='Theme'
+                        position='top'
+                        onClick={themeHandleShow}
+                    >
+                        <Icons.Theme className='h-5 w-5' />
+                    </Tooltip>
+                </Menu.Item>
+            </Menu>
 
-            <SettingDialog>
-                <Modal.Header>设置</Modal.Header>
-                <Modal.Body>
-                    <SettingPanel />
-                </Modal.Body>
-                <Modal.Actions>
-                    <form method="dialog">
-                        <Button>Close</Button>
+            <SettingDialog
+                isOpen={isSettingDialogOpen}
+                onClose={() => setIsSettingDialogOpen(false)}
+            />
+
+            <ThemeDialog backdrop={true} className='max-w-5xl w-2/5'>
+                <Modal.Header>
+                    Theme
+                    <form method='dialog' className='inline-block float-end'>
+                        <Button
+                            size='sm'
+                            color='ghost'
+                            shape='circle'
+                            className='float-end'
+                        >
+                            x
+                        </Button>
                     </form>
-                </Modal.Actions>
-            </SettingDialog>
-
-            <Button onClick={themeHandleShow} className="btn btn-primary">
-                <Icons.Settings className="h-5 w-5" />
-            </Button>
-
-            <ThemeDialog backdrop={true}>
-                <Modal.Header>设置</Modal.Header>
+                </Modal.Header>
                 <Modal.Body>
                     <ThemePanel />
                 </Modal.Body>
                 <Modal.Actions>
-                    <form method="dialog">
+                    <form method='dialog'>
                         <Button>Close</Button>
                     </form>
                 </Modal.Actions>

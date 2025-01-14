@@ -1,20 +1,35 @@
-import { Select, Card } from 'react-daisyui'
+import { Select } from 'react-daisyui'
 import React from 'react'
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware' // 引入 persist 中间件
+import { languages } from '@/common/lang'
+
 interface Settings {
     language: string
-    theme: string
 }
 
 interface SettingsStore {
     settings: Settings
     setSettings: (settings: Settings) => void
+    setSettingsItem: (settingItem: string, newValue: any) => void
 }
 
-export const useSettingsStore = create<SettingsStore>((set) => ({
-    settings: { language: 'javascript', theme: 'light' },
-    setSettings: (newSettings) => set({ settings: newSettings }),
-}))
+// 使用 persist 中间件来持久化 settings
+export const useSettingsStore = create<SettingsStore>()(
+    persist(
+        (set) => ({
+            settings: { language: languages[0].name },
+            setSettings: (newSettings) => set({ settings: newSettings }),
+            setSettingsItem: (settingItem, newValue) =>
+                set((state) => ({
+                    settings: { ...state.settings, [settingItem]: newValue },
+                })),
+        }),
+        {
+            name: 'settings-storage', // 本地存储的 key
+        },
+    ),
+)
 
 interface SettingPanelProps {
     onSettingChange?: (settings: Settings) => void
@@ -25,7 +40,7 @@ export default function SettingPanel({
 }: SettingPanelProps) {
     const { settings, setSettings } = useSettingsStore()
 
-    const handleSettingChange = (key: 'language' | 'theme', value: string) => {
+    const handleSettingChange = (key: string, value: string) => {
         const newSettings = { ...settings, [key]: value }
         setSettings(newSettings)
         onSettingChange(newSettings)
@@ -33,21 +48,22 @@ export default function SettingPanel({
 
     return (
         <div>
-            <div className="form-control">
-                <label className="label">
-                    <span className="label-text">编程语言</span>
+            <div className='form-control'>
+                <label className='label'>
+                    <span className='label-text'>Language</span>
                 </label>
                 <Select
                     value={settings.language}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                         handleSettingChange('language', e.target.value)
                     }
-                    className="w-full max-w-xs"
+                    className='w-full max-w-xs'
                 >
-                    <Select.Option value="javascript">JavaScript</Select.Option>
-                    <Select.Option value="typescript">TypeScript</Select.Option>
-                    <Select.Option value="python">Python</Select.Option>
-                    <Select.Option value="java">Java</Select.Option>
+                    {languages.map((lang) => (
+                        <Select.Option value={lang.name} key={lang.name}>
+                            {lang.name}
+                        </Select.Option>
+                    ))}
                 </Select>
             </div>
         </div>

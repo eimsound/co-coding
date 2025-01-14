@@ -8,10 +8,12 @@ import CodeMirror, {
     Extension,
     keymap,
     ReactCodeMirrorRef,
-    ViewUpdate
+    ViewUpdate,
 } from '@uiw/react-codemirror'
 // import { vscodeDark } from '@uiw/codemirror-theme-vscode'
 import { insertNewlineAndIndent } from '@codemirror/commands'
+import { Button, Select } from 'react-daisyui'
+import { useSettingsStore } from './SettingPanel' // 引入 useSettingsStore
 
 const BACKEND_URL =
     process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
@@ -20,9 +22,8 @@ interface CollaborativeEditorProps {
     roomId: string | undefined
 }
 
-
 export default function CollaborativeEditor({
-    roomId
+    roomId,
 }: CollaborativeEditorProps) {
     const [editorContent, setEditorContent] = useState('')
     const [isReadOnly, setIsReadOnly] = useState(false)
@@ -30,7 +31,7 @@ export default function CollaborativeEditor({
     const [editingUser, setEditingUser] = useState<number | null>(null)
     const [isJoined, setIsJoined] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const [selectedLanguage, setSelectedLanguage] = useState(languages[0])
+    const { settings } = useSettingsStore() // 使用 useSettingsStore 获取语言设置
     const [languageExtension, setLanguageExtension] = useState<Extension>(null)
     const socketRef = useRef<Socket>(null)
     const editorRef = useRef<ReactCodeMirrorRef>(null)
@@ -76,10 +77,13 @@ export default function CollaborativeEditor({
     }, [roomId, userId])
 
     useEffect(() => {
-        selectedLanguage.extension().then((ext) => {
-            setLanguageExtension(ext)
-        })
-    }, [selectedLanguage])
+        languages
+            .find((lang) => lang['name'] === settings.language) // 使用 settings.language
+            ?.extension()
+            .then((ext) => {
+                setLanguageExtension(ext)
+            })
+    }, [settings.language]) // 依赖 settings.language
 
     const handleEditorChange = (value: string) => {
         if (roomId && !isReadOnly) {
@@ -88,7 +92,7 @@ export default function CollaborativeEditor({
             socketRef.current?.emit('contentChange', {
                 roomId,
                 content: value,
-                lastChar
+                lastChar,
             })
         }
     }
@@ -110,7 +114,7 @@ export default function CollaborativeEditor({
     if (!isJoined) {
         return (
             <div className='flex items-center justify-center h-screen'>
-                <p className='text-xl'>Joining room { roomId }...</p>
+                <p className='text-xl'>Joining room {roomId}...</p>
             </div>
         )
     }
@@ -118,7 +122,7 @@ export default function CollaborativeEditor({
     if (error) {
         return (
             <div className='flex items-center justify-center h-screen'>
-                <p className='text-xl text-red-500'>{ error }</p>
+                <p className='text-xl text-red-500'>{error}</p>
             </div>
         )
     }
@@ -131,7 +135,7 @@ export default function CollaborativeEditor({
 
         if (head !== docLength || anchor !== docLength) {
             view.dispatch({
-                selection: { anchor: docLength, head: docLength }
+                selection: { anchor: docLength, head: docLength },
             })
         }
     }
@@ -146,39 +150,20 @@ export default function CollaborativeEditor({
         // 禁止粘贴
         EditorView.domEventHandlers({ paste: () => true }),
         // 快捷键仅保留换行
-        keymap.of([{ key: 'Enter', run: insertNewlineAndIndent }])
+        keymap.of([{ key: 'Enter', run: insertNewlineAndIndent }]),
     ]
 
     return (
-        <div className='w-full h-[600px]' onPaste={ (e) => e.preventDefault() }>
-            <div className='mb-4'>
-                <select
-                    value={ selectedLanguage.name }
-                    onChange={ (e) =>
-                        setSelectedLanguage(
-                            languages.find(
-                                (lang) => lang.name === e.target.value
-                            ) || languages[0]
-                        )
-                    }
-                    className='px-4 py-2 border rounded'
-                >
-                    { languages.map((lang) => (
-                        <option key={ lang.name } value={ lang.name }>
-                            { lang.name }
-                        </option>
-                    )) }
-                </select>
-            </div>
+        <div className='w-full h-[600px]' onPaste={(e) => e.preventDefault()}>
             <CodeMirror
-                ref={ editorRef }
-                value={ editorContent }
+                ref={editorRef}
+                value={editorContent}
                 height='50vh'
                 // theme={vscodeDark}
-                extensions={ extensions }
-                onChange={ handleEditorChange }
-                editable={ !isReadOnly }
-                basicSetup={ {
+                extensions={extensions}
+                onChange={handleEditorChange}
+                editable={!isReadOnly}
+                basicSetup={{
                     history: false,
                     drawSelection: false,
                     defaultKeymap: false,
@@ -194,25 +179,25 @@ export default function CollaborativeEditor({
                     searchKeymap: false,
                     foldKeymap: false,
                     lintKeymap: false,
-                    tabSize: 4
-                } }
-                onUpdate={ handleUpdate }
+                    tabSize: 4,
+                }}
+                onUpdate={handleUpdate}
             />
             <div className='mt-4 flex justify-between items-center'>
                 <p>
-                    You are User { userId } in Room { roomId }.
-                    { isReadOnly
-                        ? `User ${ editingUser } is currently editing.`
-                        : 'You can edit now. Press Enter to switch control.' }
+                    You are User {userId} in Room {roomId}.
+                    {isReadOnly
+                        ? `User ${editingUser} is currently editing.`
+                        : 'You can edit now. Press Enter to switch control.'}
                 </p>
-                { isReadOnly && (
-                    <button
-                        onClick={ requestEditPermission }
-                        className='px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600'
+                {isReadOnly && (
+                    <Button
+                        onClick={requestEditPermission}
+                        className='px-4 py-2 rounded btn-primary'
                     >
                         Request Edit Permission
-                    </button>
-                ) }
+                    </Button>
+                )}
             </div>
         </div>
     )
