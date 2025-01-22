@@ -1,0 +1,29 @@
+.cm-content {
+    @apply bg-base-100;
+    /* @apply text-base-content; */
+}
+.cm-gutters {
+    @apply bg-base-200 !important;
+    @apply border-base-200 !important;
+}
+
+.cm-lineNumbers {
+    @apply text-base-content/80;
+}
+
+.cm-activeLineGutter {
+    @apply bg-base-content/5 !important;
+    @apply text-base-content/80 !important;
+}
+
+.cm-activeLine {
+    @apply bg-base-content/5 !important;
+}
+
+/* .cm-focused .cm-cursor {
+    @apply text-secondary;
+}
+
+.CodeMirror-selected {
+    @apply bg-secondary;
+} */

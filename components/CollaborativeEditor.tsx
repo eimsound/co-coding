@@ -10,11 +10,12 @@ import CodeMirror, {
     ReactCodeMirrorRef,
     ViewUpdate,
 } from '@uiw/react-codemirror'
-// import { vscodeDark } from '@uiw/codemirror-theme-vscode'
 import { insertNewlineAndIndent } from '@codemirror/commands'
-import { Button, Select } from 'react-daisyui'
+import { Button } from 'react-daisyui'
 import { useSettingsStore } from './SettingPanel' // 引入 useSettingsStore
-
+import './CollaborativeEditor.css'
+import { useTheme } from 'next-themes'
+import { getCodeMirrorTheme } from '@/common/themes'
 const BACKEND_URL =
     process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
 
@@ -31,6 +32,10 @@ export default function CollaborativeEditor({
     const [editingUser, setEditingUser] = useState<number | null>(null)
     const [isJoined, setIsJoined] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [editorHighlightTheme, setEditorHighlightTheme] = useState<
+        Extension | undefined
+    >(undefined)
+    const { theme } = useTheme()
     const { settings } = useSettingsStore() // 使用 useSettingsStore 获取语言设置
     const [languageExtension, setLanguageExtension] = useState<Extension>(null)
     const socketRef = useRef<Socket>(null)
@@ -84,6 +89,10 @@ export default function CollaborativeEditor({
                 setLanguageExtension(ext)
             })
     }, [settings.language]) // 依赖 settings.language
+
+    useEffect(() => {
+        setEditorHighlightTheme(getCodeMirrorTheme(theme))
+    }, [theme])
 
     const handleEditorChange = (value: string) => {
         if (roomId && !isReadOnly) {
@@ -159,7 +168,7 @@ export default function CollaborativeEditor({
                 ref={editorRef}
                 value={editorContent}
                 height='50vh'
-                // theme={vscodeDark}
+                theme={editorHighlightTheme}
                 extensions={extensions}
                 onChange={handleEditorChange}
                 editable={!isReadOnly}
