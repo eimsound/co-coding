@@ -175,15 +175,11 @@ export default function CollaborativeEditor({
         console.log('changes', tr)
         if (!isReadOnly) {
             let newChar: string | null = null
-            if (tr.changes.inserted.length > 0) {
-                const insertedText: string[] = []
-                tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
-                    insertedText.push(inserted.toString())
-                })
-                console.log('新增的文本:', insertedText[0])
-                newChar = insertedText[0]
-                // socketRef.current?.emit('newChar', roomId, insertedText[0])
-            }
+            tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
+                if (inserted.length > 0) {
+                    newChar = inserted.toString()
+                }
+            })
             const fullContent = tr.state.doc.toString()
             socketRef.current?.emit('contentChange', {
                 roomId,

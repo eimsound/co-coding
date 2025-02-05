@@ -11,7 +11,6 @@ interface Settings {
 interface SettingsStore {
     settings: Settings
     setSettings: (settings: Settings) => void
-    setSettingsItem: (settingItem: string, newValue: any) => void
 }
 
 // 使用 persist 中间件来持久化 settings
@@ -20,10 +19,6 @@ export const useSettingsStore = create<SettingsStore>()(
         (set) => ({
             settings: { language: languages[0].name },
             setSettings: (newSettings) => set({ settings: newSettings }),
-            setSettingsItem: (settingItem, newValue) =>
-                set((state) => ({
-                    settings: { ...state.settings, [settingItem]: newValue },
-                })),
         }),
         {
             name: 'settings-storage', // 本地存储的 key
