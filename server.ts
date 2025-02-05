@@ -39,50 +39,76 @@ const io = new Server(server, {
     },
 })
 
-interface Room {
-    users: Set<string>
-    content: string
-    editingUser: number | null
-    lastEditPosition: number
-}
-
 interface Settings {
     switchTrigger: string
     cursorAtEnd: boolean
 }
 
+interface Room {
+    users: number[]
+    maxUsers: number
+    content: string
+    editingUser: number | null
+    lastEditPosition: number
+    settings: Settings
+}
+
 const rooms = new Map<string, Room>()
+
+export function arrNext<T>(arr: T[], current: T): T {
+    // 获取当前元素的索引
+    const currentIndex = arr.indexOf(current)
+
+    // 如果元素不在数组中,返回数组第一个元素
+    if (currentIndex === -1) {
+        return arr[0]
+    }
+
+    // 如果是最后一个元素,返回第一个元素
+    if (currentIndex === arr.length - 1) {
+        return arr[0]
+    }
+
+    // 返回下一个元素
+    return arr[currentIndex + 1]
+}
 
 io.on('connection', (socket) => {
     let currentRoom: string | null = null
     let userId: number | null = null
 
     socket.on('joinRoom', (roomId: string) => {
+        console.log('joinRoom', roomId)
         if (!rooms.has(roomId)) {
             rooms.set(roomId, {
-                users: new Set(),
+                users: [],
+                maxUsers: 999,
                 content: '',
-                editingUser: null,
+                editingUser: 1,
                 lastEditPosition: 0,
+                settings: {
+                    switchTrigger: '[ \n]',
+                    cursorAtEnd: true,
+                },
             })
         }
 
         const room = rooms.get(roomId)!
 
-        if (room.users.size < 2) {
-            room.users.add(socket.id)
+        if (room.users.length < room.maxUsers) {
+            if (room.users.length === 0) {
+                userId = 1
+                room.editingUser = 1
+            } else {
+                userId = room.users[room.users.length - 1] + 1
+            }
+
+            room.users.push(userId)
             socket.join(roomId)
             currentRoom = roomId
-            userId = room.users.size
             socket.emit('userId', userId)
             socket.emit('initialContent', room.content)
-
-            if (room.users.size === 1) {
-                room.editingUser = 1
-                io.to(roomId).emit('setEditingUser', 1)
-            } else {
-                io.to(roomId).emit('setEditingUser', room.editingUser)
-            }
+            io.to(roomId).emit('setEditingUser', room.editingUser)
         } else {
             socket.emit('roomFull')
         }
@@ -94,32 +120,25 @@ io.on('connection', (socket) => {
             roomId,
             content,
             cursorPosition,
-            settings,
+            newChar,
         }: {
             roomId: string
             content: string
             cursorPosition: number
-            settings: Settings
+            newChar: string | null
         }) => {
+            console.log('contentChange', roomId, content, cursorPosition)
             const room = rooms.get(roomId)
             if (room && room.editingUser === userId) {
-                const oldContent = room.content
+                // const oldContent = room.content
                 room.content = content
-
-                const switchTrigger = settings?.switchTrigger || '\n'
-                const newContentAfterLastEdit = content.slice(
-                    room.lastEditPosition,
-                )
-
-                if (newContentAfterLastEdit.includes(switchTrigger)) {
-                    room.editingUser = userId === 1 ? 2 : 1
-                    room.lastEditPosition = content.length
-                    io.to(roomId).emit('setEditingUser', room.editingUser)
-                } else if (cursorPosition < room.lastEditPosition) {
-                    room.lastEditPosition = cursorPosition
-                }
-
                 socket.to(roomId).emit('contentChange', content)
+
+                const switchTriggerRe = new RegExp(room.settings.switchTrigger)
+                if (newChar && switchTriggerRe.test(newChar)) {
+                    room.editingUser = arrNext(room.users, userId)
+                    io.to(roomId).emit('setEditingUser', room.editingUser)
+                }
             }
         },
     )
@@ -137,13 +156,15 @@ io.on('connection', (socket) => {
         if (currentRoom) {
             const room = rooms.get(currentRoom)
             if (room) {
-                room.users.delete(socket.id)
-                if (room.users.size === 0) {
+                const nextUser = arrNext(room.users, userId)
+                room.users = room.users.filter((i) => i !== userId)
+                if (room.users.length === 0) {
                     rooms.delete(currentRoom)
+                    socket.leave(currentRoom)
                 } else {
-                    room.editingUser = 1
+                    room.editingUser = nextUser
                     room.lastEditPosition = 0
-                    io.to(currentRoom).emit('setEditingUser', 1)
+                    io.to(currentRoom).emit('setEditingUser', nextUser)
                 }
             }
         }

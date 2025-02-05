@@ -4,6 +4,7 @@ import { languages } from '@/common/lang'
 import { useEffect, useRef, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import CodeMirror, {
+    EditorState,
     EditorView,
     Extension,
     keymap,
@@ -37,7 +38,7 @@ export default function CollaborativeEditor({
     >(undefined)
     const { theme } = useTheme()
     const { settings } = useSettingsStore() // 使用 useSettingsStore 获取语言设置
-    const [languageExtension, setLanguageExtension] = useState<Extension>(null)
+    const [languageExtension, setLanguageExtension] = useState<Extension>([])
     const socketRef = useRef<Socket>(null)
     const editorRef = useRef<ReactCodeMirrorRef>(null)
 
@@ -55,31 +56,42 @@ export default function CollaborativeEditor({
         })
 
         socketRef.current.on('userId', (id: number) => {
+            console.log('userId ', id)
             setUserId(id)
             setIsJoined(true)
         })
 
         socketRef.current.on('roomFull', () => {
+            console.log('room full')
             setError('Room is full. Please try another room.')
         })
 
         socketRef.current.on('initialContent', (content: string) => {
+            console.log('initialContent', content)
             setEditorContent(content)
         })
 
         socketRef.current.on('contentChange', (newContent: string) => {
+            console.log('contentChange', newContent)
             setEditorContent(newContent)
         })
 
         socketRef.current.on('setEditingUser', (editingUserId: number) => {
+            console.log('setEditingUser', editingUserId)
             setEditingUser(editingUserId)
-            // setIsReadOnly(editingUserId !== userId)
+            setIsReadOnly(editingUserId !== userId)
         })
 
         return () => {
             socketRef.current?.disconnect()
         }
     }, [roomId, userId])
+
+    useEffect(() => {
+        if (!isReadOnly) {
+            editorRef.current?.view?.focus()
+        }
+    }, [isReadOnly])
 
     useEffect(() => {
         languages
@@ -97,18 +109,23 @@ export default function CollaborativeEditor({
     const handleEditorChange = (value: string) => {
         if (roomId && !isReadOnly) {
             setEditorContent(value)
-            const lastChar = value.slice(-1)
-            socketRef.current?.emit('contentChange', {
-                roomId,
-                content: value,
-                lastChar,
-            })
         }
     }
 
     const requestEditPermission = () => {
         if (roomId) {
             socketRef.current?.emit('requestEditPermission', roomId)
+        }
+    }
+
+    const clearContent = () => {
+        if (roomId) {
+            setEditorContent('')
+            socketRef.current?.emit('contentChange', {
+                roomId,
+                content: '',
+                newChar: null,
+            })
         }
     }
 
@@ -154,16 +171,40 @@ export default function CollaborativeEditor({
         setCursorEnd(viewUpdate)
     }
 
+    const changeListener = EditorState.changeFilter.of((tr) => {
+        console.log('changes', tr)
+        if (!isReadOnly) {
+            let newChar: string | null = null
+            if (tr.changes.inserted.length > 0) {
+                const insertedText: string[] = []
+                tr.changes.iterChanges((fromA, toA, fromB, toB, inserted) => {
+                    insertedText.push(inserted.toString())
+                })
+                console.log('新增的文本:', insertedText[0])
+                newChar = insertedText[0]
+                // socketRef.current?.emit('newChar', roomId, insertedText[0])
+            }
+            const fullContent = tr.state.doc.toString()
+            socketRef.current?.emit('contentChange', {
+                roomId,
+                content: fullContent,
+                newChar,
+            })
+        }
+        return true
+    })
+
     const extensions = [
         languageExtension,
         // 禁止粘贴
         EditorView.domEventHandlers({ paste: () => true }),
         // 快捷键仅保留换行
         keymap.of([{ key: 'Enter', run: insertNewlineAndIndent }]),
+        changeListener,
     ]
 
     return (
-        <div className='w-full h-[600px]' onPaste={(e) => e.preventDefault()}>
+        <div className='w-full h-full' onPaste={(e) => e.preventDefault()}>
             <CodeMirror
                 ref={editorRef}
                 value={editorContent}
@@ -199,14 +240,24 @@ export default function CollaborativeEditor({
                         ? `User ${editingUser} is currently editing.`
                         : 'You can edit now. Press Enter to switch control.'}
                 </p>
-                {isReadOnly && (
-                    <Button
-                        onClick={requestEditPermission}
-                        className='px-4 py-2 rounded btn-primary'
-                    >
-                        Request Edit Permission
-                    </Button>
-                )}
+                <div className='flex gap-2'>
+                    {isReadOnly && (
+                        <Button
+                            onClick={requestEditPermission}
+                            className='px-4 py-2 rounded btn-primary'
+                        >
+                            Request Edit Permission
+                        </Button>
+                    )}
+                    {!isReadOnly && (
+                        <Button
+                            onClick={clearContent}
+                            className='px-4 py-2 rounded'
+                        >
+                            Clear Content
+                        </Button>
+                    )}
+                </div>
             </div>
         </div>
     )
