@@ -1,8 +1,8 @@
 import { Extension } from '@uiw/react-codemirror'
-import { catppuccin } from 'codemirror-theme-catppuccin'
+import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode'
 
-const darkCodeMirrorTheme = catppuccin('macchiato')
-const lightCodeMirrorTheme = catppuccin('latte')
+const lightCodeMirrorTheme = vscodeLight
+const darkCodeMirrorTheme = vscodeDark
 
 export const themeMap = {
     light: lightCodeMirrorTheme,

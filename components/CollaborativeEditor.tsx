@@ -231,7 +231,7 @@ export default function CollaborativeEditor({
             />
             <div className='mt-4 flex justify-between items-center'>
                 <p>
-                    You are User {userId} in Room {roomId}.
+                    You are User {userId} in Room {roomId}.{' '}
                     {isReadOnly
                         ? `User ${editingUser} is currently editing.`
                         : 'You can edit now. Press Enter to switch control.'}

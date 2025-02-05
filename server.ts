@@ -51,6 +51,7 @@ interface Room {
     editingUser: number | null
     lastEditPosition: number
     settings: Settings
+    lastSwitchTime: number
 }
 
 const rooms = new Map<string, Room>()
@@ -90,6 +91,7 @@ io.on('connection', (socket) => {
                     switchTrigger: '[ \n]',
                     cursorAtEnd: true,
                 },
+                lastSwitchTime: Date.now(), // 初始化切换时间戳
             })
         }
 
@@ -116,26 +118,20 @@ io.on('connection', (socket) => {
 
     socket.on(
         'contentChange',
-        ({
-            roomId,
-            content,
-            cursorPosition,
-            newChar,
-        }: {
-            roomId: string
-            content: string
-            cursorPosition: number
-            newChar: string | null
-        }) => {
-            console.log('contentChange', roomId, content, cursorPosition)
+        ({ roomId, content, cursorPosition, newChar }) => {
             const room = rooms.get(roomId)
             if (room && room.editingUser === userId) {
-                // const oldContent = room.content
                 room.content = content
                 socket.to(roomId).emit('contentChange', content)
 
-                const switchTriggerRe = new RegExp(room.settings.switchTrigger)
-                if (newChar && switchTriggerRe.test(newChar)) {
+                const now = Date.now()
+                // 确保距离上次切换至少200毫秒
+                if (
+                    newChar &&
+                    now - room.lastSwitchTime >= 200 &&
+                    new RegExp(room.settings.switchTrigger).test(newChar)
+                ) {
+                    room.lastSwitchTime = now // 更新切换时间戳
                     room.editingUser = arrNext(room.users, userId)
                     io.to(roomId).emit('setEditingUser', room.editingUser)
                 }
