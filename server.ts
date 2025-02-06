@@ -1,12 +1,18 @@
 import { createServer, IncomingMessage, ServerResponse } from 'http'
 import { Server } from 'socket.io'
+import dotenv from 'dotenv'
+dotenv.config()
 
 const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:3000',
     'https://co-coding-c6wn.vercel.app',
 ]
 
-const port = process.env.PORT || 3001
+const host = process.env.BACKEND_HOST || 'localhost'
+const port = process.env.BACKEND_PORT
+    ? parseInt(process.env.BACKEND_PORT)
+    : 3001
+
 const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     const origin = req.headers.origin
 
@@ -167,6 +173,6 @@ io.on('connection', (socket) => {
     })
 })
 
-server.listen(port, () => {
-    console.log(`> Backend ready on http://localhost:${port}`)
+server.listen(port, host, () => {
+    console.log(`> Backend ready on http://${host}:${port}`)
 })

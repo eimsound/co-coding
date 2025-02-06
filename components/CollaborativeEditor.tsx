@@ -17,6 +17,7 @@ import { useSettingsStore } from './SettingPanel' // 引入 useSettingsStore
 import './CollaborativeEditor.css'
 import { useTheme } from 'next-themes'
 import { getCodeMirrorTheme } from '@/common/themes'
+
 const BACKEND_URL =
     process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
 
